@@ -1,6 +1,8 @@
 import React, { Component } from 'react'
-import { Form, Button, FormField } from 'semantic-ui-react'
+import { Form, Button } from 'semantic-ui-react'
 import Validator from 'validator'
+import InlineError from '../message/InlineError'
+import PropTypes from 'prop-types'
 
 class LoginForm extends Component {
     state = {
@@ -9,7 +11,7 @@ class LoginForm extends Component {
             password: ''
         },
         loading: false,
-        error: {}
+        errors: {}
     }
 
     onChange = e =>
@@ -18,24 +20,30 @@ class LoginForm extends Component {
         });
 
     onSubmit = () => {
-        const errors = this.validate(this.state.data);
+        const errors = this.validate(this.state.data); //when submit, run this function
         this.setState({ errors })
+        if (Object.keys(errors).length === 0) {
+            this.props.submit(this.state.data);
+        }
     }
 
-    validate = (data) => {
+    validate = data => {
         const errors = {}
-        if (!Validator.isEmail(data.email)) errors.email = "Invalid email";
+        if (!Validator.isEmail(data.email)) errors.email = "Invalid email"; //and then validate data
         if (!data.password) errors.password = "Can not be blank";
-        return errors
+        //if everything is ok the errors obj will be empty, then the data can be passed
+        //but if we have smth in errors then do nothing but display the  message
+        return errors;
     }
 
 
     //for text field we can create universal onChange, but if it's number then we must create separate onChange
     render() {
-        const { data } = this.state;
+        const { data, errors } = this.state;
         return (
             <Form onSubmit={this.onSubmit}>
-                <Form.Field>
+                <Form.Field error={!!errors.email}>
+                    {/* in semantic ui there's errors attribute that change the style */}
                     <label htmlFor="email"></label>
                     <input
                         type="email"
@@ -45,8 +53,11 @@ class LoginForm extends Component {
                         value={data.email}
                         onChange={this.onChange}
                     />
+                    {errors.email && < InlineError text={errors.email} />}
                 </Form.Field>
-                <Form.Field>
+
+                <Form.Field error={!!errors.password}>
+                    {/* in semantic ui there's errors attribute that change the style */}
                     <label htmlFor="password"></label>
                     <input
                         type="password"
@@ -56,11 +67,18 @@ class LoginForm extends Component {
                         value={data.password}
                         onChange={this.onChange}
                     />
+                    {errors.password && < InlineError text={errors.password} />}
                 </Form.Field>
+
                 <Button primary>Login</Button>
             </Form>
         )
     }
 }
+
+LoginForm.propTypes = {
+    submit: PropTypes.func.isRequired,
+}
+
 
 export default LoginForm
